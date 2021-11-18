@@ -14,7 +14,7 @@
 #define CSN_PIN 9
 #define CE_PIN 10
  
-byte addr[]={"ADP01"};
+byte addr[]={"00001"};
 
 RF24 radio(CE_PIN, CSN_PIN);
 
@@ -26,12 +26,19 @@ void setup(){
   radio.openWritingPipe(addr);
   radio.setPALevel(RF24_PA_MIN);
   radio.stopListening();
+  Serial.println("\nInicioando");
 }
  
 void loop(){
  const char texto[] = "Hola Mundo";
- radio.write(&texto, sizeof(texto));
- delay(2000);
+ if(radio.write(&texto, sizeof(texto))){
+  Serial.print(F("OK"));
+ }else{
+  Serial.print(F("FALLO"));
+ }
+ Serial.print(F(" | "));
+ Serial.println(millis()%1000);
+ delay(500);
  /*
  datos[0]=millis();
  datos[1]=3.14;

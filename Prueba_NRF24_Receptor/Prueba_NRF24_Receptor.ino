@@ -23,29 +23,17 @@ float datos[2];
 void setup(){
   Serial.begin(9600);
   radio.begin();
-  radio.openReadingPipe(0, addr)
+  radio.openReadingPipe(0, addr);
   radio.setPALevel(RF24_PA_MIN);
   radio.startListening();
 }
  
 void loop(){
- if(radio.available()){
-  char texto[32] = "";
-  radio.read(&texto, sizeof(texto));
-  Serial.println(texto);
+  Serial.print(millis());
+  Serial.print(" | ");
+  if(radio.available()){
+    char texto[32] = "";
+    radio.read(&texto, sizeof(texto));
+    Serial.println(texto);
  }
- /*
- datos[0]=millis();
- datos[1]=3.14;
- bool ok = radio.write(datos, sizeof(datos));
-  if(ok){
-     Serial.print("Datos enviados: "); 
-     Serial.print(datos[0]); 
-     Serial.print(" , "); 
-     Serial.println(datos[1]); 
-  }else{
-     Serial.println("error al enviar");
-  }
-  delay(2000);
-  */
 }
