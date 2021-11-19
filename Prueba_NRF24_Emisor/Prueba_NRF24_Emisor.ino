@@ -9,48 +9,34 @@
  */
 
 #include <SPI.h>
+#include <nRF24L01.h>
 #include <RF24.h>
 
-#define CSN_PIN 9
-#define CE_PIN 10
- 
-byte addr[]={"00001"};
+#define CE_PIN 9
+#define CSN_PIN 10
 
+const byte addr[5]={'0','1','A','D','P'};
 RF24 radio(CE_PIN, CSN_PIN);
 
 float datos[2];
 
 void setup(){
-  radio.begin();
   Serial.begin(9600); 
+  radio.begin();
   radio.openWritingPipe(addr);
-  radio.setPALevel(RF24_PA_MIN);
   radio.stopListening();
-  Serial.println("\nInicioando");
+  Serial.println(F("\nIniciando..."));
 }
  
-void loop(){
- const char texto[] = "Hola Mundo";
- if(radio.write(&texto, sizeof(texto))){
-  Serial.print(F("OK"));
- }else{
-  Serial.print(F("FALLO"));
- }
- Serial.print(F(" | "));
- Serial.println(millis()%1000);
- delay(500);
- /*
- datos[0]=millis();
- datos[1]=3.14;
- bool ok = radio.write(datos, sizeof(datos));
-  if(ok){
-     Serial.print("Datos enviados: "); 
+void loop(){ 
+  datos[0]=millis();
+  datos[1]=3.14;
+  if(radio.write(&datos, sizeof(datos))){
+     Serial.print(millis());
+     Serial.print(F("\tDatos: ")); 
      Serial.print(datos[0]); 
-     Serial.print(" , "); 
+     Serial.print(F(", ")); 
      Serial.println(datos[1]); 
-  }else{
-     Serial.println("error al enviar");
   }
-  delay(2000);
-  */
+  delay(500);
 }

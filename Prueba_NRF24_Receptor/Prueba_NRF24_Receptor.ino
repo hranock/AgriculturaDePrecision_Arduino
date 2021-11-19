@@ -9,13 +9,13 @@
  */
 
 #include <SPI.h>
+#include <nRF24L01.h>
 #include <RF24.h>
 
-#define CSN_PIN 9
-#define CE_PIN 10
+#define CE_PIN 9
+#define CSN_PIN 10
  
-byte addr[]={"ADP01"};
-
+const byte addr[5]={'0','1','A','D','P'};
 RF24 radio(CE_PIN, CSN_PIN);
 
 float datos[2];
@@ -23,17 +23,17 @@ float datos[2];
 void setup(){
   Serial.begin(9600);
   radio.begin();
-  radio.openReadingPipe(0, addr);
-  radio.setPALevel(RF24_PA_MIN);
+  radio.openReadingPipe(1, addr);
   radio.startListening();
 }
  
 void loop(){
-  Serial.print(millis());
-  Serial.print(" | ");
   if(radio.available()){
-    char texto[32] = "";
-    radio.read(&texto, sizeof(texto));
-    Serial.println(texto);
+    radio.read(&datos, sizeof(datos));
+    Serial.print(millis());
+    Serial.print(F("\tDato 0 = "));
+    Serial.print(datos[0]);
+    Serial.print(F(" ms, Dato 1 ="));
+    Serial.println(datos[1]);
  }
 }
