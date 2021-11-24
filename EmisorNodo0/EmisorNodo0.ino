@@ -24,7 +24,7 @@ addr5 = 0x170922480FLL
 addr6 = 0x1709224805LL
 */
 
-const byte addr[5]={'0','1','A','D','P'};
+const byte addr[5]={'0','0','A','D','P'};
 RF24 radio(CE_PIN, CSN_PIN);
 
 float datos[3];
@@ -34,7 +34,7 @@ void setup(){
   radio.begin();
   //radio.setPALevel(RF24_PA_MAX);
   radio.setDataRate(RF24_250KBPS);
-  //radio.setChannel(100);
+  radio.setChannel(100);
   radio.openWritingPipe(addr);
   radio.stopListening();
   Serial.println(F("\nIniciando..."));
