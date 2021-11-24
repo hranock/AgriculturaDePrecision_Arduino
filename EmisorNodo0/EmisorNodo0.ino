@@ -24,7 +24,7 @@ addr5 = 0x170922480FLL
 addr6 = 0x1709224805LL
 */
 
-const byte addr[5]={'0','0','A','D','P'};
+const uint64_t addr = 0x17092248ABLL;
 RF24 radio(CE_PIN, CSN_PIN);
 
 float datos[3];
