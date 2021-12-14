@@ -27,16 +27,21 @@ const uint64_t addr[6]={
   0x1709224805LL  //nodo 5
 };
 
-RF24 radio(CE_PIN, CSN_PIN);
+RF24 rf0(CE_PIN, CSN_PIN);
 
-float datos[3];
-int nNodos=2;
+int nNodos=1;
 bool ok=false;
 
-void openChannel(int i){
-  radio.openReadingPipe(i+1, addr[i+1]);
-  radio.startListening();
-}
+struct datosEnviados {
+  byte ch1;   //id nodo
+  byte ch2;   //Sensor AFC28
+  byte ch3;   //Sensor BFC28
+  byte ch4;   //Humedad
+  byte ch5;   //DTH11
+  byte ch6;   //LM35
+};
+
+datosEnviados datos;
 
 void setup(){
   Serial.begin(115200);
@@ -45,38 +50,46 @@ void setup(){
   bool sc = wm.autoConnect("AdP-Master","password");
 
   if(!sc) {
-        Serial.println("Failed to connect");
+        Serial.println("Fallo conexion WiFi...");
         // ESP.restart();
   }else{
         //if you get here you have connected to the WiFi    
-        Serial.println("connected...yeey :)");
+        Serial.println("Conectado...");
   }
   
-  radio.begin();
-  radio.setPALevel(RF24_PA_MAX);
-  radio.setDataRate(RF24_250KBPS);
-  radio.setChannel(100);  
+  rf0.begin();
+  rf0.setPALevel(RF24_PA_MAX);
+  rf0.setDataRate(RF24_250KBPS);
+  rf0.setChannel(99);  
 }
  
 void loop(){
   for(int i=0; i<nNodos; i++){
     openChannel(i);
-    if(radio.available()){
-      radio.read(&datos, sizeof(datos));
-      Serial.print(millis());
-      Serial.print(F("\tDato 0 = "));
-      Serial.print(datos[0]);
-      Serial.print(F(" Dato 1 = "));
-      Serial.print(datos[1]);
-      Serial.print(F(" ms, Dato 2 = "));
-      Serial.println(datos[2]);
-      ok=true;
-    }else{
-      ok=false;
-    }
-    if(i==nNodos-1 && ok){
-      Serial.println();
-      delay(100);  
+    if(rf0.available()){
+      rf0.read(&datos, sizeof(datosEnviados));
+      verDatosRaw();
     }
   }
+}
+
+//********** M  E  T  O  D  O  S **********
+void openChannel(int i){
+  rf0.openReadingPipe(i+1, addr[i+1]);
+  rf0.startListening();
+}
+
+void verDatosRaw(){
+  Serial.print(F(" ID: "));
+  Serial.print(datos.ch1);
+  Serial.print(F(" || S1: "));
+  Serial.print(datos.ch2);
+  Serial.print(F(" || S2: "));
+  Serial.print(datos.ch3);
+  Serial.print(F(" || H: "));
+  Serial.print(datos.ch4);
+  Serial.print(F(" || T1: "));
+  Serial.print(datos.ch5);
+  Serial.print(F(" || T2: "));
+  Serial.println(datos.ch6);
 }

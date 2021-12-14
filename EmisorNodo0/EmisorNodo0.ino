@@ -60,8 +60,8 @@ struct datosEnviados {
   byte ch2;   //Sensor AFC28
   byte ch3;   //Sensor BFC28
   byte ch4;  //Humedad
-  float ch5;  //DTH11
-  float ch6;  //LM35
+  byte ch5;  //DTH11
+  byte ch6;  //LM35
 };
 
 datosEnviados datos;
@@ -72,7 +72,7 @@ void setup(){
   pinMode(BFC281, INPUT);
   
   Serial.begin(115200);
-  BT.begin(9600);
+  BT.begin(115200);
   dht.begin();
   
   rf0.begin();
@@ -90,11 +90,13 @@ void loop(){
   datos.ch3=leerFC28(BFC282);
   leerDHT();
   datos.ch6=leerLM35(50);
+
+  //verDatosRaw();
   
   if(rf0.write(&datos, sizeof(datosEnviados))){
     verDatosRaw();
   }
-  delay(500);
+  //delay(500);
 }
 
 //********** M  E  T  O  D  O  S **********
@@ -137,15 +139,16 @@ void reiniciarDatos(){
 }
 
 void verDatosRaw(){
+  Serial.print(F(" ID: "));
   Serial.print(datos.ch1);
-  Serial.print(F(" || "));
+  Serial.print(F(" || S1: "));
   Serial.print(datos.ch2);
-  Serial.print(F(" || "));
+  Serial.print(F(" || S2: "));
   Serial.print(datos.ch3);
-  Serial.print(F(" || "));
+  Serial.print(F(" || H: "));
   Serial.print(datos.ch4);
-  Serial.print(F(" || "));
+  Serial.print(F(" || T1: "));
   Serial.print(datos.ch5);
-  Serial.print(F(" || "));
+  Serial.print(F(" || T2: "));
   Serial.println(datos.ch6);
 }
