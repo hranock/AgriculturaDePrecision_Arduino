@@ -17,16 +17,16 @@
 #define PDHT11  2
 #define AFC281  5
 #define BFC281  6
-#define BTRX    7
-#define BTTX    8
+#define BTTX    7
+#define BTRX    8
 #define CE      9
 #define CSN     10
 #define MOSI    11
 #define MISO    12
 #define SCK     13
-#define AFC282  A0
-#define BFC282  A1
-#define LM35    A2
+#define AFC282  14
+#define BFC282  15
+#define LM35    16
 
 //Pines libres
 #define XPIND3  3
@@ -37,70 +37,79 @@
 #define XPINA6  A6
 #define XPINA7  A7
 
-/* Direcciones
-addr0 = 0x17092248FFLL  
-addr1 = 0x1709224801LL 
-addr2 = 0x1709224802LL
-addr3 = 0x1709224803LL 
-addr4 = 0x1709224804LL 
-addr5 = 0x1709224805LL
-*/
+const uint64_t addr[6]={
+  0x1709224800LL, //sin uso
+  0x1709224801LL, //nodo 1
+  0x1709224802LL, //nodo 2
+  0x1709224803LL, //nodo 3
+  0x1709224804LL, //nodo 4
+  0x1709224805LL  //nodo 5
+};
 
-const uint64_t addr = 0x1709224801LL;
+const byte idNodo=1;
 RF24 rf0(CE, CSN);
 DHT dht(PDHT11, DHT11);
-SoftwareSerial BT(BTRX,BTTX);
 
-const byte nLectura=100;
-byte h;
+int nLectura=100;
+int tMinutos=10;
+int h;
 float t;
+int tAct;
+bool flg;
 
-struct datosEnviados {
+struct datosEnviados{
   byte ch1;   //id nodo
-  byte ch2;   //Sensor AFC28
-  byte ch3;   //Sensor BFC28
-  byte ch4;  //Humedad
-  byte ch5;  //DTH11
-  byte ch6;  //LM35
+  byte ch2;   //AFC28
+  byte ch3;   //BFC28
+  byte ch4;   //Humeda
+  byte ch5;   //DHT11
+  byte ch6;   //LM35
 };
 
 datosEnviados datos;
 
+SoftwareSerial BT(BTTX,BTRX);
+
 void setup(){
   pinMode(PDHT11, INPUT);
-  pinMode(AFC281, INPUT);
-  pinMode(BFC281, INPUT);
-  
+
+  BT.begin(9600);
   Serial.begin(115200);
-  BT.begin(115200);
   dht.begin();
   
   rf0.begin();
-  //rf0.setAutoAck(false);
+  rf0.setAutoAck(false);
   rf0.setPALevel(RF24_PA_MAX);
   rf0.setDataRate(RF24_250KBPS);
-  rf0.setChannel(100);
-  rf0.openWritingPipe(addr);
+  rf0.openWritingPipe(addr[idNodo]);
   rf0.stopListening();
-  datos.ch1=1;
+
+  BT.print("Iniciando... nodo ");
+  BT.println(idNodo);
+  
+  datos.ch1=idNodo;
+  flg=true;
 }
  
-void loop(){ 
-  datos.ch2=leerFC28(AFC282);
-  datos.ch3=leerFC28(BFC282);
-  leerDHT();
-  datos.ch6=leerLM35(50);
-
-  //verDatosRaw();
-  
-  if(rf0.write(&datos, sizeof(datosEnviados))){
-    verDatosRaw();
+void loop(){
+  tAct=esperaMinuto();
+  if(tAct%tMinutos==0 && flg){  
+    leerSensores();
+    if(rf0.write(&datos, sizeof(datosEnviados))){
+      verDatosRaw();
+      verDatosRawBT();
+    }else{
+      BT.println(F("Error nrf24"));
+    }
+    flg=false;
   }
-  //delay(500);
+  if(tAct%tMinutos==1 && !flg){
+    flg=true;
+  }
 }
 
 //********** M  E  T  O  D  O  S **********
-int leerFC28(unsigned char* PIN){
+int leerFC28(uint8_t PIN){
   long z=0;
   for(int i=0; i<nLectura; i++){
     z+=analogRead(PIN);
@@ -125,30 +134,45 @@ float leerLM35(int n){
     z+=analogRead(LM35);
     delay(10);
   }
-  int t = (int) (z/n);
-  return (5.5*t*100.0)/1024.0;
+  float t=z/n;
+  return (5.5*t*100)/1024;
 }
 
-void reiniciarDatos(){
-  datos.ch1=-1;
-  datos.ch2=0;
-  datos.ch3=0;
-  datos.ch4=0;
-  datos.ch5=0;
-  datos.ch6=0;
+int esperaMinuto(){
+  return (millis()/(60000))%60;
+}
+
+void leerSensores(){
+  datos.ch2=leerFC28(AFC282);
+  datos.ch3=leerFC28(BFC282);
+  leerDHT();
+  datos.ch6=leerLM35(50);
 }
 
 void verDatosRaw(){
-  Serial.print(F(" ID: "));
   Serial.print(datos.ch1);
-  Serial.print(F(" || S1: "));
+  Serial.print(F(" || "));
   Serial.print(datos.ch2);
-  Serial.print(F(" || S2: "));
+  Serial.print(F(" || "));
   Serial.print(datos.ch3);
-  Serial.print(F(" || H: "));
+  Serial.print(F(" || "));
   Serial.print(datos.ch4);
-  Serial.print(F(" || T1: "));
+  Serial.print(F(" || "));
   Serial.print(datos.ch5);
-  Serial.print(F(" || T2: "));
+  Serial.print(F(" || "));
   Serial.println(datos.ch6);
+}
+
+void verDatosRawBT(){
+  BT.print(datos.ch1);
+  BT.print(F(" || "));
+  BT.print(datos.ch2);
+  BT.print(F(" || "));
+  BT.print(datos.ch3);
+  BT.print(F(" || "));
+  BT.print(datos.ch4);
+  BT.print(F(" || "));
+  BT.print(datos.ch5);
+  BT.print(F(" || "));
+  BT.println(datos.ch6);
 }
