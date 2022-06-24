@@ -46,7 +46,7 @@ const uint64_t addr[6]={
   0x1709224805LL  //nodo 5
 };
 
-const byte idNodo=1;
+const byte idNodo=2;
 RF24 rf0(CE, CSN);
 DHT dht(PDHT11, DHT11);
 
